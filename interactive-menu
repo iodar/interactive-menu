@@ -1,0 +1,70 @@
+#!/bin/bash
+
+# all items that should be displayed as menu options
+# each element represents one line in the menu
+menu_items=(~/workspace ~/workspace/prod ~/workspace/prod/proj1 ~/workspace/prod/proj2 ~/workspace/dev/proj1 ~/workspace/dev/proj3)
+# amount of lines to set cursor towards the top of the
+# terminal screen. This allows reprinting the menu items in a loop
+# without the text shifting down futher.
+number_of_lines_cursor_should_go_up=$((${#menu_items[@]} + 2))
+# max index of menu items list (user can not go futher down then that)
+menu_items_max_index=$((${#menu_items[@]} - 1))
+
+
+selected_menu_item_index=0
+enter_is_hit=0
+exit_is_requested=0
+echo "Select your option"
+while [[ $enter_is_hit -eq 0 && $exit_is_requested -eq 0 ]]; do
+    for menu_item_index in ${!menu_items[@]}; do
+        menu_item_text=${menu_items[menu_item_index]}
+        if [[ $menu_item_index -eq $selected_menu_item_index ]]; then
+            echo -e ">> \e[32m$menu_item_text\e[0m <<"
+        else
+            echo "   $menu_item_text   "
+        fi
+    done
+    echo "Press 'q' to exit"
+
+    # get universal ANSI escape character
+    escape_char=$(printf "\u1b")
+    # reads input without backslash escaping characters, without
+    # echoing input and returning after exactly `n` characters
+    # see `help read` for more info. 
+    read -rsn1 mode # get 1 character
+    if [[ $mode == $escape_char ]]; then
+        read -rsn2 mode # read 2 more chars
+    fi
+    # switch on input
+    case $mode in
+        # `q` was hit, user wants to exit
+        'q') exit_is_requested=1
+            ;;
+        # ARROW UP was hit, indicating navigation towards top of menu items
+        '[A')   if [[ $selected_menu_item_index -gt 0 ]]; then
+                    selected_menu_item_index=$(($selected_menu_item_index - 1))
+                fi
+                # resets cursor n lines towards top of the screen
+                # `$number_of_lines_cursor_should_go_up` is the amount of menu items +
+                # first line ('Select option ...') + last line ('Press q for ...')
+                echo -e "\e[${number_of_lines_cursor_should_go_up}A"
+            ;;
+        # ARROW DOWN was hit, indicating navigation towards botton of menu items
+        '[B')   if [[ $selected_menu_item_index -lt $menu_items_max_index ]]; then
+                    selected_menu_item_index=$(($selected_menu_item_index + 1)); 
+                fi
+                echo -e "\e[${number_of_lines_cursor_should_go_up}A"
+            ;;
+        # RETURN / ENTER was hit, indicating that user wants to select currently
+        # highligted menu item
+        '')
+            enter_is_hit=1
+            ;;
+        # reset cursor to top
+        *) echo -e "\e[${number_of_lines_cursor_should_go_up}A"
+            ;;
+    esac
+done
+
+# echo input if `RETURN` was hit
+[[ $enter_is_hit -eq 1 ]] && echo "Selected: '${menu_items[$selected_menu_item_index]}' ($selected_menu_item_index)"
