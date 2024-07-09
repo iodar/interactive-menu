@@ -1,0 +1,9 @@
+= Interactive menu for `bash`
+
+A snippet to run an interactive menu your favourite `bash` script.
+
+Just run `./interactive-menu` in your `bash` terminal to see it in action.
+
+== Customisation
+
+To change the items of the menu, simply customise the array `$menu_items` in link:./interactive-menu[`interactive-menu`] to your liking.
